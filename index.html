@@ -83,13 +83,11 @@ input, select, button {
   <button onclick="openTab('staffTab', this)">Staff Search</button>
   <button onclick="openTab('helpTab', this)">Campus Help</button>
 </div>
-
-<!-- MAP TAB -->
+  
 <div id="mapTab" class="tab-content" style="display:block;">
   <div id="map"></div>
 </div>
 
-<!-- NAVIGATION TAB -->
 <div id="navTab" class="tab-content">
   <div class="controls">
     <select id="currentLocation">
@@ -111,7 +109,6 @@ input, select, button {
   </div>
 </div>
 
-<!-- STAFF SEARCH TAB -->
 <div id="staffTab" class="tab-content">
   <div class="controls">
     <input type="text" id="staffInput" placeholder="Search staff or department">
@@ -120,7 +117,6 @@ input, select, button {
   </div>
 </div>
 
-<!-- CAMPUS HELP TAB -->
 <div id="helpTab" class="tab-content">
   <div class="controls">
     <div id="chatBox"></div>
@@ -185,7 +181,6 @@ function haversine(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-/* STAFF DATA */
 const staff = [
   { name:"Dr. S. Kumar", dept:"Computer Science", email:"kumar@sece.ac.in", status:"Available" },
   { name:"Ms. R. Priya", dept:"AI & DS", email:"priya@sece.ac.in", status:"In Class" },
@@ -247,3 +242,4 @@ function sendMessage() {
 
 </body>
 </html>
+
