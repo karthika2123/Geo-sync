@@ -135,7 +135,6 @@ function openTab(id, btn) {
   btn.classList.add("active");
 }
 
-/* MAP */
 var map = L.map('map').setView([11.0185, 77.0121], 18);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -212,7 +211,6 @@ function searchStaff() {
   });
 }
 
-/* CHATBOT WITH OPENING TIMES */
 function sendMessage() {
   let msg = userInput.value.trim().toLowerCase();
   if (!msg) return;
@@ -242,4 +240,5 @@ function sendMessage() {
 
 </body>
 </html>
+
 
