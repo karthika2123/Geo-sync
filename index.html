@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Geo Sync</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+}
+
+h1 { margin: 15px 0; }
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  background: #e0e0e0;
+}
+
+.tabs button {
+  padding: 12px 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.tabs button.active {
+  background: #4CAF50;
+  color: white;
+}
+
+.tab-content {
+  display: none;
+  padding: 15px;
+}
+
+.controls {
+  max-width: 450px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input, select, button {
+  padding: 10px;
+  font-size: 15px;
+}
+
+#map {
+  height: 420px;
+  border: 2px solid #000;
+  border-radius: 8px;
+}
+
+#chatBox, #staffResult {
+  height: 220px;
+  border: 1px solid #ccc;
+  overflow-y: auto;
+  text-align: left;
+  padding: 8px;
+}
+
+.available { color: green; font-weight: bold; }
+.busy { color: orange; font-weight: bold; }
+.unavailable { color: red; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<h1>Geo Sync</h1>
+
+<div class="tabs">
+  <button class="active" onclick="openTab('mapTab', this)">Map</button>
+  <button onclick="openTab('navTab', this)">Navigation</button>
+  <button onclick="openTab('staffTab', this)">Staff Search</button>
+  <button onclick="openTab('helpTab', this)">Campus Help</button>
+</div>
+
+<!-- MAP TAB -->
+<div id="mapTab" class="tab-content" style="display:block;">
+  <div id="map"></div>
+</div>
+
+<!-- NAVIGATION TAB -->
+<div id="navTab" class="tab-content">
+  <div class="controls">
+    <select id="currentLocation">
+      <option value="">Current Location</option>
+      <option value="11.0185,77.0121">Hostel</option>
+      <option value="11.0178,77.0128">Library</option>
+      <option value="11.0180,77.0112">Cafeteria</option>
+    </select>
+
+    <select id="destination">
+      <option value="">Destination</option>
+      <option value="11.0188,77.0122">Main Block</option>
+      <option value="11.0182,77.0133">AI Block</option>
+      <option value="11.0192,77.0115">Office</option>
+    </select>
+
+    <button onclick="calculateDistance()">Calculate Distance</button>
+    <p id="distanceResult"></p>
+  </div>
+</div>
+
+<!-- STAFF SEARCH TAB -->
+<div id="staffTab" class="tab-content">
+  <div class="controls">
+    <input type="text" id="staffInput" placeholder="Search staff or department">
+    <button onclick="searchStaff()">Search</button>
+    <div id="staffResult"></div>
+  </div>
+</div>
+
+<!-- CAMPUS HELP TAB -->
+<div id="helpTab" class="tab-content">
+  <div class="controls">
+    <div id="chatBox"></div>
+    <input type="text" id="userInput" placeholder="Ask something...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+function openTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = "none");
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove("active"));
+  document.getElementById(id).style.display = "block";
+  btn.classList.add("active");
+}
+
+/* MAP */
+var map = L.map('map').setView([11.0185, 77.0121], 18);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+var places = {
+  "Hostel (Open 24 Hours)": [11.0185,77.0121],
+  "Library (8 AM - 8 PM)": [11.0178,77.0128],
+  "Cafeteria (7 AM - 7 PM)": [11.0180,77.0112],
+  "Main Block (9 AM - 5 PM)": [11.0188,77.0122],
+  "AI Block (9 AM - 5 PM)": [11.0182,77.0133],
+  "Office (9 AM - 4 PM)": [11.0192,77.0115]
+};
+
+for (let p in places) {
+  L.marker(places[p]).addTo(map).bindPopup(p);
+}
+
+var routeLine;
+
+function calculateDistance() {
+  let s = currentLocation.value;
+  let e = destination.value;
+  if (!s || !e) return alert("Select both locations");
+
+  s = s.split(',').map(Number);
+  e = e.split(',').map(Number);
+
+  if (routeLine) map.removeLayer(routeLine);
+  routeLine = L.polyline([s, e], { color: "blue", dashArray: "8,6" }).addTo(map);
+
+  map.fitBounds(routeLine.getBounds());
+  distanceResult.innerText =
+    "Distance: " + haversine(s[0], s[1], e[0], e[1]).toFixed(2) + " km";
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  let dLat = (lat2-lat1)*Math.PI/180;
+  let dLon = (lon2-lon1)*Math.PI/180;
+  let a = Math.sin(dLat/2)**2 +
+          Math.cos(lat1*Math.PI/180) *
+          Math.cos(lat2*Math.PI/180) *
+          Math.sin(dLon/2)**2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* STAFF DATA */
+const staff = [
+  { name:"Dr. S. Kumar", dept:"Computer Science", email:"kumar@sece.ac.in", status:"Available" },
+  { name:"Ms. R. Priya", dept:"AI & DS", email:"priya@sece.ac.in", status:"In Class" },
+  { name:"Mr. V. Arun", dept:"IT", email:"arun@sece.ac.in", status:"Not Available" }
+];
+
+function searchStaff() {
+  let q = staffInput.value.toLowerCase();
+  staffResult.innerHTML = "";
+
+  let res = staff.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.dept.toLowerCase().includes(q)
+  );
+
+  if (!res.length) {
+    staffResult.innerHTML = "No staff found.";
+    return;
+  }
+
+  res.forEach(s => {
+    let cls = s.status === "Available" ? "available" :
+              s.status === "In Class" ? "busy" : "unavailable";
+    staffResult.innerHTML += `
+      <b>Name:</b> ${s.name}<br>
+      <b>Dept:</b> ${s.dept}<br>
+      <b>Email:</b> ${s.email}<br>
+      <b>Status:</b> <span class="${cls}">${s.status}</span><hr>`;
+  });
+}
+
+/* CHATBOT WITH OPENING TIMES */
+function sendMessage() {
+  let msg = userInput.value.trim().toLowerCase();
+  if (!msg) return;
+
+  chatBox.innerHTML += "<b>You:</b> " + msg + "<br>";
+  userInput.value = "";
+
+  let reply = "Ask about campus places and timings.";
+
+  if (msg.includes("library"))
+    reply = "Library is open from 8 AM to 8 PM.";
+  else if (msg.includes("cafeteria") || msg.includes("canteen"))
+    reply = "Cafeteria is open from 7 AM to 7 PM.";
+  else if (msg.includes("office"))
+    reply = "Office is open from 9 AM to 4 PM.";
+  else if (msg.includes("hostel"))
+    reply = "Hostel is open 24 hours.";
+  else if (msg.includes("block"))
+    reply = "Academic blocks are open from 9 AM to 5 PM.";
+
+  setTimeout(() => {
+    chatBox.innerHTML += "<b>Bot:</b> " + reply + "<br>";
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }, 400);
+}
+</script>
+
+</body>
+</html>
